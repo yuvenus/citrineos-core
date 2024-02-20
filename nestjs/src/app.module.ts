@@ -1,9 +1,10 @@
 import {DynamicModule, Module, Provider} from '@nestjs/common';
-import {AppService} from './app.service';
 import configuration from './config/configuration';
 import {ConfigModule} from '@nestjs/config';
 import {TransactionModule} from './modules/transaction/transaction.module';
 import {EventGroup} from "./modules/base/enums/event.group";
+import {MonitoringModule} from './modules/monitoring/monitoring.module';
+import {WebsocketModule} from './modules/websocket/websocket.module';
 
 @Module({})
 export class AppModule {
@@ -13,11 +14,15 @@ export class AppModule {
       ConfigModule.forRoot({
         load: [configuration],
       }),
+      WebsocketModule
     ];
-    const defaultProviders: Provider[] = [AppService];
+    const defaultProviders: Provider[] = [];
     const exports = [];
     if ([EventGroup.Transactions, EventGroup.General].includes(eventGroup)) {
       defaultImports.push(TransactionModule);
+    }
+    if ([EventGroup.Monitoring, EventGroup.General].includes(eventGroup)) {
+      defaultImports.push(MonitoringModule);
     }
     return {
       module: AppModule,

@@ -1,4 +1,10 @@
-import { Module } from '@nestjs/common';
+import {Module} from '@nestjs/common';
+import {TestController} from "./api/test.controller";
 
-@Module({})
-export class TransactionModule {}
+@Module({
+  controllers: [
+    TestController
+  ]
+})
+export class TransactionModule {
+}

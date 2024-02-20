@@ -3,15 +3,19 @@ import {AppModule} from './app.module';
 import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify';
 import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger';
 import {EventGroup} from "./modules/base/enums/event.group";
+import {WsAdapter} from '@nestjs/platform-ws'
 
 async function bootstrap() {
 
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter());
-
   let eventGroup: EventGroup = process.env.APP_NAME as EventGroup;
+  console.log('eventGroup', eventGroup);
   if (!eventGroup) {
     eventGroup = EventGroup.General;
   }
+
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule.register(eventGroup), new FastifyAdapter());
+
+  app.useWebSocketAdapter(new WsAdapter(app));
 
   const options = new DocumentBuilder()
     .setTitle('Citrine')
@@ -21,8 +25,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, options);
   SwaggerModule.setup('api/swagger', app, document);
 
-
-  const app = await NestFactory.create(AppModule.register(eventGroup));
   await app.listen(3000);
 }
 
