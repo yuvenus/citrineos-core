@@ -1,20 +1,30 @@
-import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { CommonModule } from './modules/common/common.module';
+import {DynamicModule, Module, Provider} from '@nestjs/common';
+import {AppService} from './app.service';
 import configuration from './config/configuration';
-import { ConfigModule } from '@nestjs/config';
-import { ProvisioningModule } from './provisioning/provisioning.module';
+import {ConfigModule} from '@nestjs/config';
+import {TransactionModule} from './modules/transaction/transaction.module';
+import {EventGroup} from "./modules/base/enums/event.group";
 
-@Module({
-  imports: [
-    CommonModule,
-    ConfigModule.forRoot({
-      load: [configuration],
-    }),
-    ProvisioningModule,
-  ],
-  controllers: [AppController],
-  providers: [AppService],
-})
-export class AppModule {}
+@Module({})
+export class AppModule {
+  static register(eventGroup: EventGroup): DynamicModule {
+    // todo type
+    const defaultImports: any[] = [
+      ConfigModule.forRoot({
+        load: [configuration],
+      }),
+    ];
+    const defaultProviders: Provider[] = [AppService];
+    const exports = [];
+    if ([EventGroup.Transactions, EventGroup.General].includes(eventGroup)) {
+      defaultImports.push(TransactionModule);
+    }
+    return {
+      module: AppModule,
+      imports: defaultImports,
+      controllers: [],
+      providers: defaultProviders,
+      exports: exports,
+    };
+  }
+}

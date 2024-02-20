@@ -1,4 +1,4 @@
-import { RegistrationStatusEnumType } from '../modules/common/common.module';
+import { RegistrationStatusEnumType } from '../modules/base/base.module';
 
 export default () => ({
   env: process.env.ENV_NAME || 'development',

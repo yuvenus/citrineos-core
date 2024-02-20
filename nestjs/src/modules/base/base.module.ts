@@ -12,4 +12,4 @@ export enum CONTROLLER {
 }
 
 @Module({})
-export class CommonModule {}
+export class BaseModule {}
