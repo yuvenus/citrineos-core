@@ -3,7 +3,7 @@
 //
 // SPDX-License-Identifier: Apache 2.0
 
-import { AbstractMessageHandler, IMessageHandler, IModule, SystemConfig, CallAction, IMessage, OcppRequest, OcppResponse, HandlerProperties, Message, OcppError, RetryMessageError } from "@citrineos/base";
+import { AbstractMessageHandler, IMessageHandler, IModule, SystemConfig, CallAction, OcppRequest, OcppResponse, Message, OcppError, RetryMessageError } from "@citrineos/base";
 import { plainToInstance } from "class-transformer";
 import { Admin, Consumer, EachMessagePayload, Kafka } from "kafkajs";
 import { ILogObj, Logger } from "tslog";
@@ -17,12 +17,11 @@ export class KafkaReceiver extends AbstractMessageHandler implements IMessageHan
      * Fields
      */
     private _client: Kafka;
-    private _module?: IModule;
     private _topicName: string;
     private _consumerMap: Map<string, Consumer>;
 
-    constructor(config: SystemConfig, logger?: Logger<ILogObj>, module?: IModule) {
-        super(config, logger);
+    constructor(config: SystemConfig, module: IModule, logger?: Logger<ILogObj>) {
+        super(config, module, logger);
 
         this._module = module;
         this._consumerMap = new Map<string, Consumer>();
@@ -86,25 +85,10 @@ export class KafkaReceiver extends AbstractMessageHandler implements IMessageHan
             });
     }
 
-    async handle(message: IMessage<OcppRequest | OcppResponse | OcppError>, props?: HandlerProperties): Promise<void> {
-        await this._module?.handle(message, props);
-    }
-
     shutdown(): void {
         this._consumerMap.forEach((value) => {
             value.disconnect();
         });
-    }
-
-    /**
-     * Getter & Setter
-     */
-
-    get module(): IModule | undefined {
-        return this._module;
-    }
-    set module(value: IModule | undefined) {
-        this._module = value;
     }
 
     /**

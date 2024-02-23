@@ -3,5 +3,4 @@
 //
 // SPDX-License-Identifier: Apache 2.0
 
-export { CentralSystemMessageHandler, OcppMessageRouter } from "./example/router";
 export { CentralSystemImpl } from "./example/server"
