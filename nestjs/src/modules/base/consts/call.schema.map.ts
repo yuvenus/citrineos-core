@@ -1,0 +1,48 @@
+import {CallAction} from "../enums/call.action";
+import {
+  AuthorizeRequestSchema,
+  BootNotificationRequestSchema,
+  ClearedChargingLimitRequestSchema,
+  DataTransferRequestSchema,
+  FirmwareStatusNotificationRequestSchema,
+  Get15118EVCertificateRequestSchema,
+  GetCertificateStatusRequestSchema,
+  HeartbeatRequestSchema,
+  LogStatusNotificationRequestSchema,
+  MeterValuesRequestSchema,
+  NotifyCustomerInformationRequestSchema,
+  NotifyDisplayMessagesRequestSchema,
+  NotifyEventRequestSchema,
+  NotifyMonitoringReportRequestSchema,
+  NotifyReportRequestSchema,
+  PublishFirmwareStatusNotificationRequestSchema,
+  ReservationStatusUpdateRequestSchema,
+  SecurityEventNotificationRequestSchema,
+  SignCertificateRequestSchema,
+  StatusNotificationRequestSchema,
+  TransactionEventRequestSchema
+} from '../ocpp/model';
+
+export const CALL_SCHEMA_MAP: Map<CallAction, object> = new Map<CallAction, object>([
+  [CallAction.Authorize, AuthorizeRequestSchema],
+  [CallAction.BootNotification, BootNotificationRequestSchema],
+  [CallAction.ClearedChargingLimit, ClearedChargingLimitRequestSchema],
+  [CallAction.DataTransfer, DataTransferRequestSchema],
+  [CallAction.FirmwareStatusNotification, FirmwareStatusNotificationRequestSchema],
+  [CallAction.Get15118EVCertificate, Get15118EVCertificateRequestSchema],
+  [CallAction.GetCertificateStatus, GetCertificateStatusRequestSchema],
+  [CallAction.Heartbeat, HeartbeatRequestSchema],
+  [CallAction.LogStatusNotification, LogStatusNotificationRequestSchema],
+  [CallAction.MeterValues, MeterValuesRequestSchema],
+  [CallAction.NotifyCustomerInformation, NotifyCustomerInformationRequestSchema],
+  [CallAction.NotifyDisplayMessages, NotifyDisplayMessagesRequestSchema],
+  [CallAction.NotifyEvent, NotifyEventRequestSchema],
+  [CallAction.NotifyMonitoringReport, NotifyMonitoringReportRequestSchema],
+  [CallAction.NotifyReport, NotifyReportRequestSchema],
+  [CallAction.PublishFirmwareStatusNotification, PublishFirmwareStatusNotificationRequestSchema],
+  [CallAction.ReservationStatusUpdate, ReservationStatusUpdateRequestSchema],
+  [CallAction.SecurityEventNotification, SecurityEventNotificationRequestSchema],
+  [CallAction.SignCertificate, SignCertificateRequestSchema],
+  [CallAction.StatusNotification, StatusNotificationRequestSchema],
+  [CallAction.TransactionEvent, TransactionEventRequestSchema]
+]);

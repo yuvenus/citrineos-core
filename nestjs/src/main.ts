@@ -4,6 +4,8 @@ import {FastifyAdapter, NestFastifyApplication} from '@nestjs/platform-fastify';
 import {DocumentBuilder, SwaggerModule} from '@nestjs/swagger';
 import {EventGroup} from "./modules/base/enums/event.group";
 import {WsAdapter} from '@nestjs/platform-ws'
+import {Logger} from "./modules/logger/logger";
+import {Transport} from "@nestjs/microservices";
 
 async function bootstrap() {
 
@@ -14,6 +16,18 @@ async function bootstrap() {
   }
 
   const app = await NestFactory.create<NestFastifyApplication>(AppModule.register(eventGroup), new FastifyAdapter());
+  app.connectMicroservice({
+    transport: Transport.RMQ,
+    options: {
+      urls: ['amqp://guest:guest@localhost:5672'],
+      queue: 'cats_queue',
+      queueOptions: {
+        durable: false
+      },
+    },
+  });
+  await app.startAllMicroservices();
+  app.useLogger(app.get(Logger));
 
   app.useWebSocketAdapter(new WsAdapter(app));
 
