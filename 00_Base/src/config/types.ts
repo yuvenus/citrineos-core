@@ -3,285 +3,688 @@
 //
 // SPDX-License-Identifier: Apache 2.0
 
-import { z } from "zod";
-import { RegistrationStatusEnumType } from "../ocpp/model/enums";
-import { EventGroup } from "..";
+import {z} from "zod";
+import {RegistrationStatusEnumType} from "../ocpp/model/enums";
+import {EventGroup} from "..";
+import {IsArray, IsBoolean, IsEnum, IsInt, IsNumber, IsOptional, IsPositive, IsString, Max, Min} from "class-validator";
+
+enum AppEnv {
+	development = "development",
+	production = "production"
+}
 
 // TODO: Refactor other objects out of system config, such as certificatesModuleInputSchema etc.
-export const websocketServerInputSchema = z.object({
-    // TODO: Add support for tenant ids on server level for tenant-specific behavior
-    id: z.string().optional(),
-    host: z.string().default('localhost').optional(),
-    port: z.number().int().positive().default(8080).optional(),
-    pingInterval: z.number().int().positive().default(60).optional(),
-    protocol: z.string().default('ocpp2.0.1').optional(),
-    securityProfile: z.number().int().min(0).max(3).default(0).optional(),
-    tlsKeysFilepath: z.string().optional(),
-    tlsCertificateChainFilepath: z.string().optional(),
-    mtlsCertificateAuthorityRootsFilepath: z.string().optional(),
-    mtlsCertificateAuthorityKeysFilepath: z.string().optional()
-});
+class ConfigWebsocketServerInputSchema {
+	// TODO: Add support for tenant ids on server level for tenant-specific behavior
+	@IsString()
+	@IsOptional()
+	id: string;
 
-export const systemConfigInputSchema = z.object({
-    env: z.enum(["development", "production"]),
-    centralSystem: z.object({
-        host: z.string().default("localhost").optional(),
-        port: z.number().int().positive().default(8081).optional(),
-    }),
-    modules: z.object({
-        certificates: z.object({
-            endpointPrefix: z.string().default(EventGroup.Certificates).optional(),
-            host: z.string().default("localhost").optional(),
-            port: z.number().int().positive().default(8081).optional(),
-        }).optional(),
-        configuration: z.object({
-            heartbeatInterval: z.number().int().positive().default(60).optional(),
-            bootRetryInterval: z.number().int().positive().default(10).optional(),
-            unknownChargerStatus: z.enum([RegistrationStatusEnumType.Accepted, RegistrationStatusEnumType.Pending, RegistrationStatusEnumType.Rejected]).default(RegistrationStatusEnumType.Accepted).optional(), // Unknown chargers have no entry in BootConfig table
-            getBaseReportOnPending: z.boolean().default(true).optional(),
-            bootWithRejectedVariables: z.boolean().default(true).optional(),
-            autoAccept: z.boolean().default(true).optional(), // If false, only data endpoint can update boot status to accepted
-            endpointPrefix: z.string().default(EventGroup.Configuration).optional(),
-            host: z.string().default("localhost").optional(),
-            port: z.number().int().positive().default(8081).optional(),
-        }),
-        evdriver: z.object({
-            endpointPrefix: z.string().default(EventGroup.EVDriver).optional(),
-            host: z.string().default("localhost").optional(),
-            port: z.number().int().positive().default(8081).optional(),
-        }),
-        monitoring: z.object({
-            endpointPrefix: z.string().default(EventGroup.Monitoring).optional(),
-            host: z.string().default("localhost").optional(),
-            port: z.number().int().positive().default(8081).optional(),
-        }),
-        reporting: z.object({
-            endpointPrefix: z.string().default(EventGroup.Reporting).optional(),
-            host: z.string().default("localhost").optional(),
-            port: z.number().int().positive().default(8081).optional(),
-        }),
-        smartcharging: z.object({
-            endpointPrefix: z.string().default(EventGroup.SmartCharging).optional(),
-            host: z.string().default("localhost").optional(),
-            port: z.number().int().positive().default(8081).optional(),
-        }).optional(),
-        transactions: z.object({
-            endpointPrefix: z.string().default(EventGroup.Transactions).optional(),
-            host: z.string().default("localhost").optional(),
-            port: z.number().int().positive().default(8081).optional(),
-        })
-    }),
-    data: z.object({
-        sequelize: z.object({
-            host: z.string().default('localhost').optional(),
-            port: z.number().int().positive().default(5432).optional(),
-            database: z.string().default('csms').optional(),
-            dialect: z.any().default('sqlite').optional(),
-            username: z.string().optional(),
-            password: z.string().optional(),
-            storage: z.string().default('csms.sqlite').optional(),
-            sync: z.boolean().default(false).optional(),
-        }),
-    }),
-    util: z.object({
-        cache: z.object({
-            memory: z.boolean().optional(),
-            redis: z.object({
-                host: z.string().default('localhost').optional(),
-                port: z.number().int().positive().default(6379).optional(),
-            }).optional(),
-        }).refine(obj => obj.memory || obj.redis, {
-            message: 'A cache implementation must be set'
-        }),
-        messageBroker: z.object({
-            pubsub: z.object({
-                topicPrefix: z.string().default('ocpp').optional(),
-                topicName: z.string().optional(),
-                servicePath: z.string().optional(),
-            }).optional(),
-            kafka: z.object({
-                topicPrefix: z.string().optional(),
-                topicName: z.string().optional(),
-                brokers: z.array(z.string()),
-                sasl: z.object({
-                    mechanism: z.string(),
-                    username: z.string(),
-                    password: z.string()
-                })
-            }).optional(),
-            amqp: z.object({
-                url: z.string(),
-                exchange: z.string(),
-            }).optional(),
-        }).refine(obj => obj.pubsub || obj.kafka || obj.amqp, {
-            message: 'A message broker implementation must be set'
-        }),
-        swagger: z.object({
-            path: z.string().default('/docs').optional(),
-            logoPath: z.string(),
-            exposeData: z.boolean().default(true).optional(),
-            exposeMessage: z.boolean().default(true).optional(),
-        }).optional(),
-        networkConnection: z.object({
-            websocketServers: z.array(websocketServerInputSchema.optional())
-        })
-    }),
-    logLevel: z.number().min(0).max(6).default(0).optional(),
-    maxCallLengthSeconds: z.number().int().positive().default(5).optional(),
-    maxCachingSeconds: z.number().int().positive().default(10).optional()
-});
+	@IsString()
+	@IsOptional()
+	host: string = 'localhost';
+
+	@IsNumber()
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	port = 8080;
+
+	@IsNumber()
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	pingInterval = 60;
+
+	@IsString()
+	@IsOptional()
+	protocol: string = 'ocpp2.0.1';
+
+	@IsNumber()
+	@IsOptional()
+	@Min(0)
+	@Max(3)
+	@IsInt()
+	securityProfile = 0;
+
+	@IsString()
+	@IsOptional()
+	tlsKeysFilepath: string;
+
+	@IsString()
+	@IsOptional()
+	tlsCertificateChainFilepath: string;
+
+	@IsString()
+	@IsOptional()
+	mtlsCertificateAuthorityRootsFilepath: string;
+
+	@IsString()
+	@IsOptional()
+	mtlsCertificateAuthorityKeysFilepath: string;
+}
+
+class ConfigCentralSystem {
+	@IsString()
+	@IsOptional()
+	host: string = "localhost";
+
+	@IsNumber()
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	port = 8081;
+}
+
+class ConfigModulesConfiguration {
+	@IsNumber()
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	heartbeatInterval = 60;
+
+	@IsNumber()
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	bootRetryInterval = 10;
+
+	@IsOptional()
+	@IsEnum(RegistrationStatusEnumType)
+	unknownChargerStatus = RegistrationStatusEnumType.Accepted; // Unknown chargers have no entry in BootConfig table
+
+	@IsOptional()
+	@IsBoolean()
+	getBaseReportOnPending = true;
+
+	@IsOptional()
+	@IsBoolean()
+	bootWithRejectedVariables = true;
+
+	@IsOptional()
+	@IsBoolean()
+	autoAccept = true; // If false, only data endpoint can update boot status to accepted
+
+	@IsString()
+	@IsOptional()
+	endpointPrefix: string = EventGroup.Configuration;
+
+	@IsString()
+	@IsOptional()
+	host: string = "localhost";
+
+	@IsNumber()
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	port = 8081;
+}
+
+class ConfigModulesBase {
+	@IsString()
+	@IsOptional()
+	endpointPrefix: string = EventGroup.Configuration;
+
+	@IsString()
+	@IsOptional()
+	host = "localhost";
+
+	@IsNumber()
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	port = 8081;
+}
+
+class ConfigModulesCertificates extends ConfigModulesBase{
+	@IsString()
+	@IsOptional()
+	endpointPrefix: string = EventGroup.Certificates;
+}
+
+class ConfigModulesEvDriver extends ConfigModulesBase {
+	@IsString()
+	@IsOptional()
+	endpointPrefix: string = EventGroup.EVDriver;
+}
+
+class ConfigModulesMonitoring extends ConfigModulesBase {
+	@IsString()
+	@IsOptional()
+	endpointPrefix: string = EventGroup.Monitoring;
+}
+
+class ConfigModulesReporting extends ConfigModulesBase{
+	@IsString()
+	@IsOptional()
+	endpointPrefix: string = EventGroup.Reporting;
+}
+
+class ConfigModulesSmartCharging extends ConfigModulesBase {
+	@IsString()
+	@IsOptional()
+	endpointPrefix = EventGroup.SmartCharging;
+}
+
+class ConfigModulesTransactions extends ConfigModulesBase{
+	@IsString()
+	@IsOptional()
+	endpointPrefix = EventGroup.Transactions;
+}
+
+class ConfigModules {
+	configuration = new ConfigModulesConfiguration();
+	evdriver = new ConfigModulesEvDriver();
+	monitoring = new ConfigModulesMonitoring();
+	reporting = new ConfigModulesReporting();
+	transactions = new ConfigModulesTransactions();
+
+	@IsOptional()
+	smartcharging = new ConfigModulesSmartCharging();
+
+	@IsOptional()
+	certificates = new ConfigModulesCertificates();
+
+}
+
+class ConfigDataSequelize {
+	@IsString()
+	@IsOptional()
+	host = 'localhost';
+
+	@IsNumber()
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	port = 5432;
+
+	@IsString()
+	@IsOptional()
+	database = 'csms';
+
+	@IsOptional()
+	dialect: any = 'sqlite';
+
+	@IsString()
+	@IsOptional()
+	username?: string;
+
+	@IsString()
+	@IsOptional()
+	password?: string;
+
+	@IsString()
+	@IsOptional()
+	storage = 'csms.sqlite';
+
+	@IsOptional()
+	@IsBoolean()
+	sync = false;
+}
+
+class ConfigData {
+	sequelize = new ConfigDataSequelize()
+}
+
+class ConfigUtilCacheRedis {
+	@IsString()
+	@IsOptional()
+	host = 'localhost';
+
+	@IsNumber()
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	port = 6379;
+}
+
+class ConfigUtilCache {
+	@IsOptional()
+	@IsBoolean()
+	memory?: boolean;
+
+	@IsOptional()
+	redis = new ConfigUtilCacheRedis();
+
+	// todo .refine(obj => obj.memory || obj.redis, {
+	//  message: 'A cache implementation must be set'
+}
+
+export class ConfigUtilMessageBrokerPubSub {
+	@IsString()
+	@IsOptional()
+	topicPrefix = 'ocpp';
+
+	@IsString()
+	@IsOptional()
+	topicName?: string;
+
+	@IsString()
+	@IsOptional()
+	servicePath?: string;
+}
+
+export class ConfigUtilMessageBrokerKafka {
+	@IsString()
+	@IsOptional()
+	topicPrefix?: string;
+
+	@IsString()
+	@IsOptional()
+	topicName?: string;
+
+	@IsArray()
+	brokers: string[];
+
+	sasl: ConfigUtilMessageBrokerKafkaSasl
+}
+
+export class ConfigUtilMessageBrokerKafkaSasl {
+	@IsString()
+	mechanism: string;
+
+	@IsString()
+	username: string;
+
+	@IsString()
+	password: string
+}
+
+export class ConfigUtilMessageBrokerAmpq {
+	@IsString()
+	url: string;
+
+	@IsString()
+	exchange: string;
+}
+
+export class ConfigUtilMessageBroker {
+	@IsOptional()
+	pubsub = new ConfigUtilMessageBrokerPubSub();
+
+	@IsOptional()
+	kafka = new ConfigUtilMessageBrokerKafka();
+
+	@IsOptional()
+	amqp = new ConfigUtilMessageBrokerAmpq();
+
+	// todo
+	// .refine(obj => obj.pubsub || obj.kafka || obj.amqp, {
+	//     message: 'A message broker implementation must be set'
+	// })
+}
+
+class ConfigUtilSwagger {
+	@IsString()
+	@IsOptional()
+	path = '/docs';
+
+	@IsString()
+	logoPath: string;
+
+	@IsOptional()
+	@IsBoolean()
+	exposeData = true;
+
+	@IsOptional()
+	@IsBoolean()
+	exposeMessage = true;
+}
+
+class ConfigUtilNetworkConnection {
+	@IsOptional()
+	websocketServers: ConfigWebsocketServerInputSchema[];
+}
+
+class ConfigUtil {
+	cache: ConfigUtilCache
+	messageBroker: ConfigUtilMessageBroker
+	networkConnection: ConfigUtilNetworkConnection
+
+	@IsOptional()
+	swagger: ConfigUtilSwagger
+}
+
+export const websocketServerInputSchema = new ConfigWebsocketServerInputSchema();
+
+class ConfigSystemConfigInputSchema {
+	@IsEnum(AppEnv)
+	env: AppEnv;
+
+	centralSystem: ConfigCentralSystem
+	modules: ConfigModules
+	data: ConfigData
+	util: ConfigUtil
+
+	@IsNumber()
+	@IsOptional()
+	@Min(0)
+	@Max(6)
+	logLevel = 0;
+
+	@IsNumber()
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	maxCallLengthSeconds = 5;
+
+	@IsNumber()
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	maxCachingSeconds = 10;
+}
+
+export const systemConfigInputSchema = new ConfigSystemConfigInputSchema();
 
 export type SystemConfigInput = z.infer<typeof systemConfigInputSchema>;
 
-export const websocketServerSchema = z.object({
-    // TODO: Add support for tenant ids on server level for tenant-specific behavior
-    id: z.string(),
-    host: z.string(),
-    port: z.number().int().positive(),
-    pingInterval: z.number().int().positive(),
-    protocol: z.string(),
-    securityProfile: z.number().int().min(0).max(3),
-    tlsKeysFilepath: z.string().optional(),
-    tlsCertificateChainFilepath: z.string().optional(),
-    mtlsCertificateAuthorityRootsFilepath: z.string().optional(),
-    mtlsCertificateAuthorityKeysFilepath: z.string().optional()
-}).refine(obj => {
-    switch (obj.securityProfile) {
-        case 0: // No security
-        case 1: // Basic Auth
-            return true;
-        case 2: // Basic Auth + TLS
-            return obj.tlsKeysFilepath && obj.tlsCertificateChainFilepath;
-        case 3: // mTLS
-            return obj.mtlsCertificateAuthorityRootsFilepath && obj.mtlsCertificateAuthorityKeysFilepath;
-        default:
-            return false;
-    }
-});
+class ConfigWebsocketServerSchema extends ConfigSystemConfigHostPort {
+	// TODO: Add support for tenant ids on server level for tenant-specific behavior
+	@IsString()
+	id: string;
 
-export const systemConfigSchema = z.object({
-    env: z.enum(["development", "production"]),
-    centralSystem: z.object({
-        host: z.string(),
-        port: z.number().int().positive()
-    }),
-    modules: z.object({
-        certificates: z.object({
-            endpointPrefix: z.string(),
-            host: z.string().optional(),
-            port: z.number().int().positive().optional(),
-        }).optional(),
-        evdriver: z.object({
-            endpointPrefix: z.string(),
-            host: z.string().optional(),
-            port: z.number().int().positive().optional(),
-        }),
-        configuration: z.object({
-            heartbeatInterval: z.number().int().positive(),
-            bootRetryInterval: z.number().int().positive(),
-            unknownChargerStatus: z.enum([RegistrationStatusEnumType.Accepted, RegistrationStatusEnumType.Pending, RegistrationStatusEnumType.Rejected]), // Unknown chargers have no entry in BootConfig table
-            getBaseReportOnPending: z.boolean(),
-            bootWithRejectedVariables: z.boolean(),
-            /**
-             * If false, only data endpoint can update boot status to accepted
-             */
-            autoAccept: z.boolean(),
-            endpointPrefix: z.string(),
-            host: z.string().optional(),
-            port: z.number().int().positive().optional(),
-        }), // Configuration module is required
-        monitoring: z.object({
-            endpointPrefix: z.string(),
-            host: z.string().optional(),
-            port: z.number().int().positive().optional(),
-        }),
-        reporting: z.object({
-            endpointPrefix: z.string(),
-            host: z.string().optional(),
-            port: z.number().int().positive().optional(),
-        }),
-        smartcharging: z.object({
-            endpointPrefix: z.string(),
-            host: z.string().optional(),
-            port: z.number().int().positive().optional(),
-        }).optional(),
-        transactions: z.object({
-            endpointPrefix: z.string(),
-            host: z.string().optional(),
-            port: z.number().int().positive().optional(),
-        }), // Transactions module is required
-    }),
-    data: z.object({
-        sequelize: z.object({
-            host: z.string(),
-            port: z.number().int().positive(),
-            database: z.string(),
-            dialect: z.any(),
-            username: z.string(),
-            password: z.string(),
-            storage: z.string(),
-            sync: z.boolean(),
-        }),
-    }),
-    util: z.object({
-        cache: z.object({
-            memory: z.boolean().optional(),
-            redis: z.object({
-                host: z.string(),
-                port: z.number().int().positive(),
-            }).optional(),
-        }).refine(obj => obj.memory || obj.redis, {
-            message: 'A cache implementation must be set'
-        }),
-        messageBroker: z.object({
-            pubsub: z.object({
-                topicPrefix: z.string(),
-                topicName: z.string().optional(),
-                servicePath: z.string().optional(),
-            }).optional(),
-            kafka: z.object({
-                topicPrefix: z.string().optional(),
-                topicName: z.string().optional(),
-                brokers: z.array(z.string()),
-                sasl: z.object({
-                    mechanism: z.string(),
-                    username: z.string(),
-                    password: z.string()
-                })
-            }).optional(),
-            amqp: z.object({
-                url: z.string(),
-                exchange: z.string(),
-            }).optional(),
-        }).refine(obj => obj.pubsub || obj.kafka || obj.amqp, {
-            message: 'A message broker implementation must be set'
-        }),
-        swagger: z.object({
-            path: z.string(),
-            logoPath: z.string(),
-            exposeData: z.boolean(),
-            exposeMessage: z.boolean(),
-        }).optional(),
-        networkConnection: z.object({
-            websocketServers: z.array(websocketServerSchema).refine(array => {
-                const idsSeen = new Set<string>();
-                return array.filter(obj => {
-                    if (idsSeen.has(obj.id)) {
-                        return false;
-                    } else {
-                        idsSeen.add(obj.id);
-                        return true;
-                    }
-                });
-            })
-        })
-    }),
-    logLevel: z.number().min(0).max(6),
-    maxCallLengthSeconds: z.number().int().positive(),
-    maxCachingSeconds: z.number().int().positive()
-}).refine(obj => obj.maxCachingSeconds >= obj.maxCallLengthSeconds, {
-    message: 'maxCachingSeconds cannot be less than maxCallLengthSeconds'
-});
+	@IsNumber()
+	@IsInt()
+	@IsPositive()
+	pingInterval: number;
+
+	@IsString()
+	protocol: string;
+
+	@IsNumber()
+	@Min(0)
+	@Max(3)
+	@IsInt()
+	securityProfile: number;
+
+	@IsString()
+	@IsOptional()
+	tlsKeysFilepath: string;
+
+	@IsString()
+	@IsOptional()
+	tlsCertificateChainFilepath: string;
+
+	@IsString()
+	@IsOptional()
+	mtlsCertificateAuthorityRootsFilepath: string;
+
+	@IsString()
+	@IsOptional()
+	mtlsCertificateAuthorityKeysFilepath: string;
+
+
+	// todo
+	// .refine(obj => {
+	//     switch (obj.securityProfile) {
+	//     case 0: // No security
+	//     case 1: // Basic Auth
+	//     return true;
+	//     case 2: // Basic Auth + TLS
+	//     return obj.tlsKeysFilepath && obj.tlsCertificateChainFilepath;
+	//     case 3: // mTLS
+	//     return obj.mtlsCertificateAuthorityRootsFilepath && obj.mtlsCertificateAuthorityKeysFilepath;
+	//     default:
+	//     return false;
+	// }
+	// });
+}
+
+export const websocketServerSchema = new ConfigWebsocketServerSchema();
+
+class ConfigSystemConfigSchemaModulesConfiguration extends EndpointHostPort {
+	@IsNumber()
+	@IsInt()
+	@IsPositive()
+	heartbeatInterval: number;
+
+	@IsNumber()
+	@IsInt()
+	@IsPositive()
+	bootRetryInterval: number;
+
+	@IsEnum(RegistrationStatusEnumType)
+	unknownChargerStatus: RegistrationStatusEnumType // Unknown chargers have no entry in BootConfig table
+
+	@IsBoolean()
+	getBaseReportOnPending: boolean;
+
+	@IsBoolean()
+	bootWithRejectedVariables: boolean;
+
+	@IsBoolean()
+	autoAccept: boolean; // If false, only data endpoint can update boot status to accepted
+}
+
+class ConfigSystemConfigSchema {
+	@IsEnum(AppEnv)
+	env: AppEnv
+	centralSystem: ConfigSystemConfigHostPort
+	modules: ConfigSystemConfigSchemaModules
+}
+
+class ConfigSystemConfigSchemaDataSequilize extends ConfigSystemConfigHostPort {
+
+	@IsString()
+	database: string;
+
+
+	dialect: any;
+
+	@IsString()
+	username: string;
+
+	@IsString()
+	password: string;
+
+	@IsString()
+	storage: string;
+
+	@IsBoolean()
+	sync: boolean;
+
+}
+
+class ConfigSystemConfigSchemaData {
+	sequelize: ConfigSystemConfigSchemaDataSequilize
+}
+
+class ConfigSystemConfigSchemaModules {
+	evdriver: EndpointHostPort
+	configuration: ConfigSystemConfigSchemaModulesConfiguration // Configuration module is required
+	monitoring: EndpointHostPort
+	reporting: EndpointHostPort
+	transactions: EndpointHostPort // Transactions module is required
+
+	@IsOptional()
+	smartcharging: EndpointHostPort
+	@IsOptional()
+	certificates: EndpointHostPort
+}
+
+class ConfigSystemConfigHostPort {
+
+	@IsString()
+	host: string;
+
+	@IsNumber()
+	@IsInt()
+	@IsPositive()
+	port: number;
+
+}
+
+class EndpointHostPort {
+
+	@IsString()
+	endpointPrefix: string;
+
+	@IsString()
+	@IsOptional()
+	host: string;
+
+	@IsNumber()
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	port: number;
+
+}
+
+class ConfigSystemConfigSchemaUtilCache {
+
+	@IsOptional()
+	@IsBoolean()
+	memory: boolean;
+
+	@IsOptional()
+	redis: ConfigSystemConfigHostPort;
+
+
+	// todo
+	// .refine(obj => obj.memory || obj.redis, {
+	//     message: 'A cache implementation must be set'
+	// })
+}
+
+class ConfigSystemConfigSchemaUtilMessageBrokerPubSub {
+
+	@IsString()
+	topicPrefix: string;
+
+	@IsString()
+	@IsOptional()
+	topicName: string;
+
+	@IsString()
+	@IsOptional()
+	servicePath: string;
+
+}
+
+class ConfigSystemConfigSchemaUtilMessageBrokerKafkaSasl {
+	@IsString()
+	mechanism: string;
+
+	@IsString()
+	username: string;
+
+	@IsString()
+	password: string
+}
+
+class ConfigSystemConfigSchemaUtilMessageBrokerKafka {
+	@IsString()
+	@IsOptional()
+	topicPrefix: string;
+
+	@IsString()
+	@IsOptional()
+	topicName: string;
+
+	@IsString()
+	@IsArray()
+	brokers: string[];
+
+	sasl: ConfigSystemConfigSchemaUtilMessageBrokerKafkaSasl
+}
+
+class ConfigSystemConfigSchemaUtilMessageBrokerAmqp {
+
+	@IsString()
+	url: string;
+
+	@IsString()
+	exchange: string;
+
+}
+
+class ConfigSystemConfigSchemaUtilMessageBroker {
+
+	@IsOptional()
+	pubsub: ConfigSystemConfigSchemaUtilMessageBrokerPubSub;
+
+	@IsOptional()
+	kafka: ConfigSystemConfigSchemaUtilMessageBrokerKafka;
+
+	@IsOptional()
+	amqp: ConfigSystemConfigSchemaUtilMessageBrokerAmqp;
+
+
+	// todo
+	// .refine(obj => obj.pubsub || obj.kafka || obj.amqp, {
+	//     message: 'A message broker implementation must be set'
+	// })
+}
+
+class ConfigSystemConfigSchemaUtilSwagger {
+	@IsString()
+	path: string;
+
+	@IsString()
+	logoPath: string;
+
+	@IsBoolean()
+	exposeData: boolean;
+
+	@IsBoolean()
+	exposeMessage: boolean;
+}
+
+export class ConfigSystemConfigSchemaUtilNetworkConnection {
+	websocketServers: ConfigWebsocketServerSchema[]
+
+	// todo
+	// .refine(array => {
+	//     const idsSeen = new Set<string>();
+	//     return array.filter(obj => {
+	//     if (idsSeen.has(obj.id)) {
+	//     return false;
+	// } else {
+	//     idsSeen.add(obj.id);
+	//     return true;
+	// }
+	// });
+	// })
+}
+
+class ConfigSystemConfigSchemaUtil {
+	cache: ConfigSystemConfigSchemaUtilCache
+	messageBroker: ConfigSystemConfigSchemaUtilMessageBroker
+	networkConnection: ConfigSystemConfigSchemaUtilNetworkConnection
+
+	@IsOptional()
+	swagger: ConfigSystemConfigSchemaUtilSwagger
+}
+
+class ConfigSystemConfigSchema {
+	modules: ConfigSystemConfigSchemaModules
+	data: ConfigSystemConfigSchemaData
+	util: ConfigSystemConfigSchemaUtil
+
+	@IsNumber()
+	@Min(0)
+	@Max(6)
+	logLevel: number;
+
+	@IsNumber()
+	@IsInt()
+	@IsPositive()
+	maxCallLengthSeconds: number;
+
+	@IsNumber()
+	@IsInt()
+	@IsPositive()
+	maxCachingSeconds: number
+
+	// todo
+	// .refine(obj => obj.maxCachingSeconds >= obj.maxCallLengthSeconds, {
+	//     message: 'maxCachingSeconds cannot be less than maxCallLengthSeconds'
+	// })
+}
+
+export const systemConfigSchema = new ConfigSystemConfigSchema();
 
 export type WebsocketServerConfig = z.infer<typeof websocketServerSchema>;
 export type SystemConfig = z.infer<typeof systemConfigSchema>;
