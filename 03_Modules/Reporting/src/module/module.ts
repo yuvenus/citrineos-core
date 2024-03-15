@@ -4,10 +4,18 @@
 // SPDX-License-Identifier: Apache 2.0
 
 import { BaseModule, CallAction, SystemConfig, ICache, IMessageSender, IMessageHandler, EventGroup, AsHandler, IMessage, NotifyReportRequest, HandlerProperties, SetVariableStatusEnumType, NotifyReportResponse, NotifyMonitoringReportRequest, NotifyMonitoringReportResponse, LogStatusNotificationRequest, LogStatusNotificationResponse, NotifyCustomerInformationRequest, NotifyCustomerInformationResponse, GetBaseReportResponse, SecurityEventNotificationRequest, SecurityEventNotificationResponse } from "@citrineos/base";
-import { IDeviceModelRepository, ISecurityEventRepository, sequelize, Component, Variable } from "@citrineos/data";
+import {
+  IDeviceModelRepository,
+  ISecurityEventRepository,
+  sequelize,
+  Component,
+  Variable,
+  SecurityEventRepositoryTypeORM
+} from "@citrineos/data";
 import { RabbitMqReceiver, RabbitMqSender, Timer } from "@citrineos/util";
 import deasyncPromise from "deasync-promise";
 import { ILogObj, Logger } from 'tslog';
+import {inject} from "tsyringe";
 
 /**
  * Component that handles provisioning related messages.
@@ -42,7 +50,6 @@ export class ReportingModule extends BaseModule {
   static readonly GET_BASE_REPORT_COMPLETE_CACHE_VALUE = 'complete';
 
   protected _deviceModelRepository: IDeviceModelRepository;
-  protected _securityEventRepository: ISecurityEventRepository;
 
   get deviceModelRepository(): IDeviceModelRepository {
     return this._deviceModelRepository;
@@ -79,7 +86,7 @@ export class ReportingModule extends BaseModule {
     handler?: IMessageHandler,
     logger?: Logger<ILogObj>,
     deviceModelRepository?: IDeviceModelRepository,
-    securityEventRepository?: ISecurityEventRepository
+    @inject(SecurityEventRepositoryTypeORM) private readonly securityEventRepository?: ISecurityEventRepository
   ) {
     super(config, cache, handler || new RabbitMqReceiver(logger, undefined, config, cache), sender || new RabbitMqSender(config, logger), EventGroup.Reporting, logger);
 
@@ -91,7 +98,6 @@ export class ReportingModule extends BaseModule {
     }
 
     this._deviceModelRepository = deviceModelRepository || new sequelize.DeviceModelRepository(config, this._logger);
-    this._securityEventRepository = securityEventRepository || new sequelize.SecurityEventRepository(config, this._logger);
 
     this._logger.info(`Initialized in ${timer.end()}ms...`);
   }
@@ -191,7 +197,7 @@ export class ReportingModule extends BaseModule {
     props?: HandlerProperties
   ): void {
     this._logger.debug("SecurityEventNotification request received", message, props);
-    this._securityEventRepository.createByStationId(message.payload, message.context.stationId);
+    this.securityEventRepository?.createByStationId(message.payload, message.context.stationId);
     this.sendCallResultWithMessage(message, {} as SecurityEventNotificationResponse);
   }
 

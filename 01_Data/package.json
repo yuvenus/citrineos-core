@@ -32,7 +32,9 @@
     "pg-hstore": "^2.3.4",
     "sequelize-typescript": "^2.1.5",
     "tslog": "^4.8.2",
-    "uuid": "^9.0.0"
+    "typeorm": "^0.3.20",
+    "uuid": "^9.0.0",
+    "tsyringe": "^4.8.0"
   },
   "engines": {
     "node": ">=18"

@@ -10,7 +10,7 @@ import { VariableAttribute } from "./DeviceModel";
 @Table
 export class Boot extends Model implements BootConfig {
 
-    static readonly MODEL_NAME: string = Namespace.BootConfig;
+    static readonly MODEL_NAME: string = Namespace.BootConfig; // todo can this be removed?
 
     declare customData?: CustomDataType;
 

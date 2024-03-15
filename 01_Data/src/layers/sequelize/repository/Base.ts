@@ -8,6 +8,7 @@ import { Model, Sequelize } from "sequelize-typescript";
 import { DefaultSequelizeInstance } from "../util";
 import { ILogObj, Logger } from "tslog";
 
+// todo: remove entirely w typeorm
 export abstract class SequelizeRepository<T extends Model<any, any>> implements ICrudRepository<T> {
 
     protected s: Sequelize

@@ -5,4 +5,5 @@
 
 export * as sequelize from "./layers/sequelize";
 export * from "./interfaces";
+export {SecurityEventRepositoryTypeORM} from "./layers/sequelize/repository/SecurityEventTypeORM";
 export {DeviceModelRepository, Boot, Component, Variable, VariableAttribute} from "./layers/sequelize"; // todo export better as these seem to be used in other modules
