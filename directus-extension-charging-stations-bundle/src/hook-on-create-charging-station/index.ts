@@ -19,7 +19,7 @@ export default defineHook(({ action }, { env }) => {
         }
 
         fetch(subscriptionUrl, {
-            method: 'PUT',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
